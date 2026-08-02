@@ -17,6 +17,9 @@ stonecutter {
         version("26.2-fabric", "26.2")
         version("26.2-neo", "26.2")
 
+        version("26.1.2-fabric", "26.1.2")
+        version("26.1.2-neo", "26.1.2")
+
         version("1.21.5-fabric", "1.21.5")
         version("1.21.5-neo", "1.21.5")
 
