@@ -5,6 +5,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,3 +44,18 @@ jobs:
         with:
           name: Artifacts
           path: versions/*/build/libs/*.jar
+
+      - name: Read mod version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: version
+        run: echo "version=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          files: versions/*/build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
