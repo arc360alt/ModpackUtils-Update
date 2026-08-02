@@ -5,6 +5,7 @@ import dev.ultimatchamp.mutils.config.ModpackUtilsConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
@@ -22,16 +23,16 @@ public class ClientPacketListenerMixin {
         if (Minecraft.getInstance().player == null) return;
 
         if (ModpackUtilsConfig.instance().chatWelcome) {
-            Minecraft.getInstance().player.displayClientMessage(Component.literal(
+            mutils$sendMessage(Minecraft.getInstance().player, Component.literal(
                     ModpackUtilsConfig.instance().chatWelcomeMessage
                             .replaceAll("<modpack-name>", ModpackUtilsConfig.instance().modpackName)
                             .replaceAll("<version>", ModpackUtilsConfig.instance().localVersion)
-            ).withStyle(arg -> arg.withColor(ChatFormatting.GREEN)), false);
+            ).withStyle(arg -> arg.withColor(ChatFormatting.GREEN)));
         }
 
         if (ModpackUtilsConfig.instance().menuAlert && ModpackUtils.updateAvailable() && ModpackUtils.getLatestVersion() != null) {
-            Minecraft.getInstance().player.displayClientMessage(Component.literal(ModpackUtilsConfig.instance().chatMessage).withStyle(arg -> arg.withColor(ChatFormatting.YELLOW)), false);
-            Minecraft.getInstance().player.displayClientMessage(
+            mutils$sendMessage(Minecraft.getInstance().player, Component.literal(ModpackUtilsConfig.instance().chatMessage).withStyle(arg -> arg.withColor(ChatFormatting.YELLOW)));
+            mutils$sendMessage(Minecraft.getInstance().player,
                     Component.literal(ModpackUtilsConfig.instance().modpackName + " " + ModpackUtilsConfig.instance().localVersion + " --> " + ModpackUtils.getLatestVersion())
                             .withStyle(arg -> arg
                                     .withUnderlined(true)
@@ -43,8 +44,7 @@ public class ClientPacketListenerMixin {
                                                             /*? if >1.21.4 {*/URI.create/*?}*/("https://modrinth.com/modpack/" + ModpackUtilsConfig.instance().modpackId + "/version/" + ModpackUtils.getLatestVersion()) :
                                                             /*? if >1.21.4 {*/URI.create/*?}*/("https://www.curseforge.com/minecraft/modpacks/" + ModpackUtilsConfig.instance().modpackId + "/" + ModpackUtils.getLatestFileId())
                                     ))
-                            ),
-                    false
+                            )
             );
         }
 
@@ -53,15 +53,22 @@ public class ClientPacketListenerMixin {
             var minRam = ModpackUtilsConfig.instance().minRam;
 
             if (minRam > allocatedRam) {
-                Minecraft.getInstance().player.displayClientMessage(Component.translatable("mutils.text.lowRam").withStyle(arg -> arg.withColor(ChatFormatting.RED)), false);
-                Minecraft.getInstance().player.displayClientMessage(
+                mutils$sendMessage(Minecraft.getInstance().player, Component.translatable("mutils.text.lowRam").withStyle(arg -> arg.withColor(ChatFormatting.RED)));
+                mutils$sendMessage(Minecraft.getInstance().player,
                         Component.literal(allocatedRam + " --> " + minRam)
                                 .withStyle(arg -> arg
                                         .withColor(ChatFormatting.RED)
-                                ),
-                        false
+                                )
                 );
             }
         }
+    }
+
+    private static void mutils$sendMessage(LocalPlayer player, Component component) {
+        //? if >1.21.5 {
+        player.sendSystemMessage(component);
+        //?} else {
+        //player.displayClientMessage(component, false);
+        //?}
     }
 }

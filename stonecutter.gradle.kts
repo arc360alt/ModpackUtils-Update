@@ -1,19 +1,15 @@
-import dev.kikugie.stonecutter.ide.RunConfigType
-
 plugins {
     id("dev.kikugie.stonecutter")
 }
 
-stonecutter active "1.21.5-fabric"
+stonecutter active "26.2-fabric"
 
-stonecutter.generateRunConfigs = listOf(RunConfigType.CHISEL, RunConfigType.SWITCH)
-
-stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chiseled) {
+tasks.register("chiseledBuild") {
     group = "project"
-    ofTask("build")
+    dependsOn(stonecutter.tasks.named("build").map { it.values })
 }
 
-stonecutter registerChiseled tasks.register("chiseledReleaseMod", stonecutter.chiseled) {
+tasks.register("chiseledReleaseMod") {
     group = "project"
-    ofTask("publishMods")
+    dependsOn(stonecutter.tasks.named("publishMods").map { it.values })
 }

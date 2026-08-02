@@ -1,5 +1,5 @@
 plugins {
-    id("dev.architectury.loom") version "1.10-SNAPSHOT"
+    id("dev.architectury.loom") version "1.17.491"
     id("me.modmuss50.mod-publish-plugin") version "0.8.4"
     id("org.moddedmc.wiki.toolkit") version "0.2.7"
 }
@@ -15,6 +15,10 @@ if (mcVer.contains("-") || mcVer.contains("w")) {
     isSnapshot = true
     mcVer = mcVer.replace("-", "")
 }
+
+// Minecraft 26.1+ ships unobfuscated with Mojang's real names built in, so there are no
+// official mappings to download and no remapping to perform.
+val requiresJava25 = mcVer.substringBefore(".").toIntOrNull()?.let { it >= 26 } ?: false
 
 version = "${project.property("mod_version")}+$loader.$mcVer"
 group = project.property("maven_group") as String
@@ -44,28 +48,42 @@ loom {
     }
 }
 
+val parchmentVersion = project.property("deps.parchment_version") as String
+
+// Loom only registers the "mappings" and "mod*" configurations in obfuscated (pre-26.1) projects,
+// so these are looked up by name (via `add`) instead of the generated Kotlin accessors, which
+// wouldn't resolve when this shared script is compiled against a 26.1+ subproject.
+val modConfig = if (requiresJava25) "implementation" else "modImplementation"
+
 dependencies {
     minecraft("com.mojang:minecraft:${project.property("deps.minecraft_version")}")
-    mappings(loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.property("deps.minecraft_version")}:${project.property("deps.parchment_version")}@zip")
-    })
-
-    if (isFabric) {
-        modImplementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
-        modImplementation("maven.modrinth:modmenu:${project.property("deps.modmenu_version")}")
-        modImplementation("maven.modrinth:main-menu-credits:${project.property("deps.mmc_version")}")
-    } else if (isNeo) {
-        "neoForge"("net.neoforged:neoforge:${project.property("deps.neoforge")}")
+    if (!requiresJava25) {
+        add(
+            "mappings",
+            if (parchmentVersion.isNotBlank()) {
+                loom.layered {
+                    officialMojangMappings()
+                    parchment("org.parchmentmc.data:parchment-${project.property("deps.minecraft_version")}:$parchmentVersion@zip")
+                }
+            } else {
+                loom.officialMojangMappings()
+            }
+        )
     }
 
-    modImplementation("dev.isxander:yet-another-config-lib:${project.property("deps.yacl_version")}")
+    if (isFabric) {
+        add(modConfig, "net.fabricmc:fabric-loader:${project.property("loader_version")}")
+        add(modConfig, "maven.modrinth:modmenu:${project.property("deps.modmenu_version")}")
+        add(modConfig, "maven.modrinth:main-menu-credits:${project.property("deps.mmc_version")}")
+    } else if (isNeo) {
+        add("neoForge", "net.neoforged:neoforge:${project.property("deps.neoforge")}")
+    }
+
+    add(modConfig, "dev.isxander:yet-another-config-lib:${project.property("deps.yacl_version")}")
 }
 
-stonecutter {
-    const("fabric", isFabric)
-    const("neoforge", isNeo)
-}
+stonecutter.constants.put("fabric", isFabric)
+stonecutter.constants.put("neoforge", isNeo)
 
 tasks.processResources {
     val replaceProperties = mapOf(
@@ -94,11 +112,13 @@ tasks.processResources {
     }
 }
 
+val projectJavaVersion = JavaVersion.toVersion(if (requiresJava25) 25 else 21)
+
 java {
     withSourcesJar()
 
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = projectJavaVersion
+    targetCompatibility = projectJavaVersion
 }
 
 tasks.jar {
@@ -116,7 +136,12 @@ publishMods {
     }
 
     changelog.set("# ${project.version}\n${rootProject.file("CHANGELOG.md").readText()}")
-    file.set(tasks.remapJar.get().archiveFile)
+    file.set(
+        tasks.named(
+            if (requiresJava25) "jar" else "remapJar",
+            org.gradle.api.tasks.bundling.AbstractArchiveTask::class.java
+        ).flatMap { it.archiveFile }
+    )
     displayName.set("ModpackUtils ${project.version}")
 
     if (isFabric) {
@@ -187,6 +212,16 @@ publishMods {
             curseforge("c1.21.5") {
                 from(cfOptions)
                 minecraftVersions.add("1.21.5")
+            }
+        }
+        "26.2" -> {
+            modrinth("m26.2") {
+                from(mrOptions)
+                minecraftVersions.add("26.2")
+            }
+            curseforge("c26.2") {
+                from(cfOptions)
+                minecraftVersions.add("26.2")
             }
         }
     }

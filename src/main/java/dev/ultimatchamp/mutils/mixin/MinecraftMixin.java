@@ -12,7 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//? if >1.21.1 {
+//? if >1.21.5 {
+import net.minecraft.client.gui.Gui;
+//?} else if >1.21.1 {
 import net.minecraft.client.gui.components.toasts.ToastManager;
 //?} else {
 //import net.minecraft.client.gui.components.toasts.ToastComponent;
@@ -21,8 +23,10 @@ import net.minecraft.client.gui.components.toasts.ToastManager;
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
     @Shadow
-    //? if >1.21.1 {
-    public abstract ToastManager getToastManager();
+    //? if >1.21.5 {
+    public Gui gui;
+    //?} else if >1.21.1 {
+    //public abstract ToastManager getToastManager();
     //?} else {
     //public abstract ToastComponent getToasts();
     //?}
@@ -31,8 +35,10 @@ public abstract class MinecraftMixin {
     private void mutils$showUpdateToast(CallbackInfo ci) {
         if (ModpackUtilsConfig.instance().menuAlert && ModpackUtils.updateAvailable() && ModpackUtils.getLatestVersion() != null) {
             SystemToast.add(
-                    //? if >1.21.1 {
-                    this.getToastManager(),
+                    //? if >1.21.5 {
+                    this.gui.toastManager(),
+                    //?} else if >1.21.1 {
+                    //this.getToastManager(),
                     //?} else {
                     //this.getToasts(),
                     //?}
@@ -53,8 +59,10 @@ public abstract class MinecraftMixin {
 
             if (minRam > allocatedRam) {
                 SystemToast.add(
-                        //? if >1.21.1 {
-                        this.getToastManager(),
+                        //? if >1.21.5 {
+                        this.gui.toastManager(),
+                        //?} else if >1.21.1 {
+                        //this.getToastManager(),
                         //?} else {
                         //this.getToasts(),
                         //?}

@@ -9,20 +9,23 @@ pluginManagement {
 }
 
 plugins {
-    id("dev.kikugie.stonecutter") version "0.6"
+    id("dev.kikugie.stonecutter") version "0.9.7"
 }
 
 stonecutter {
     create(rootProject) {
-        vers("1.21.5-fabric", "1.21.5")
-        vers("1.21.5-neo", "1.21.5")
+        version("26.2-fabric", "26.2")
+        version("26.2-neo", "26.2")
 
-        vers("1.21.4-fabric", "1.21.4")
-        vers("1.21.4-neo", "1.21.4")
+        version("1.21.5-fabric", "1.21.5")
+        version("1.21.5-neo", "1.21.5")
 
-        vers("1.21.1-neo", "1.21.1") // :pain:
+        version("1.21.4-fabric", "1.21.4")
+        version("1.21.4-neo", "1.21.4")
 
-        vcsVersion = "1.21.5-fabric"
+        version("1.21.1-neo", "1.21.1") // :pain:
+
+        vcsVersion = "26.2-fabric"
     }
 }
 
