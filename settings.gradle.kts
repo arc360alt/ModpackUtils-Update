@@ -14,6 +14,9 @@ plugins {
 
 stonecutter {
     create(rootProject) {
+        version("26.3-fabric", "26.3")
+        version("26.3-neo", "26.3")
+
         version("26.2-fabric", "26.2")
         version("26.2-neo", "26.2")
 

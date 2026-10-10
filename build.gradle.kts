@@ -224,6 +224,16 @@ publishMods {
                 minecraftVersions.add("26.2")
             }
         }
+        "26.3" -> {
+            modrinth("m26.3") {
+                from(mrOptions)
+                minecraftVersions.add("26.3")
+            }
+            curseforge("c26.3") {
+                from(cfOptions)
+                minecraftVersions.add("26.3")
+            }
+        }
     }
 
     github {
